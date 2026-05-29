@@ -115,13 +115,13 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
         const assistantMessage: ChatMessage = {
           role: 'assistant',
           content: response.reply,
-          timestamp: new Date(response.timestamp),
+          timestamp: new Date(),
         };
 
         setChatState((prev) => ({
           ...prev,
           messages: [...prev.messages, assistantMessage],
-          sessionId: response.session_id,
+          sessionId: response.sessionId || prev.sessionId,
           isLoading: false,
         }));
       } catch (error) {

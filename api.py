@@ -11,7 +11,7 @@ import uuid
 from typing import Dict, List, Optional
 
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -35,8 +35,6 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     reply: str
-    session_id: str
-    timestamp: datetime
 
 
 class SessionResetRequest(BaseModel):
@@ -166,6 +164,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
+    expose_headers=["X-Session-Id"],
 )
 
 request_counts: Dict[str, List[float]] = {}
@@ -212,7 +211,7 @@ async def health_check():
 
 
 @app.post("/api/chat", response_model=ChatResponse, dependencies=[Depends(rate_limit_dependency)])
-async def chat_endpoint(chat_request: ChatRequest):
+async def chat_endpoint(chat_request: ChatRequest, response: Response):
     global chatbot
 
     if not chatbot:
@@ -230,13 +229,12 @@ async def chat_endpoint(chat_request: ChatRequest):
             history.append({"role": "user", "content": item["user"]})
             history.append({"role": "assistant", "content": item["bot"]})
 
-        response = chatbot.chat(chat_request.message, history)
-        session_manager.add_to_history(session_id, chat_request.message, response)
+        reply = chatbot.chat(chat_request.message, history)
+        session_manager.add_to_history(session_id, chat_request.message, reply)
+        response.headers["X-Session-Id"] = session_id
 
         return ChatResponse(
-            reply=response,
-            session_id=session_id,
-            timestamp=datetime.now(),
+            reply=reply,
         )
     except Exception as exc:
         print(f"Chat error: {exc}")

@@ -57,7 +57,7 @@ def test_chat_conversation():
                 return False
 
             data = response.json()
-            session_id = data["session_id"]
+            session_id = response.headers.get("X-Session-Id")
             print(f"Response ({response_time:.2f}s): {data['reply'][:120]}...")
         except Exception as exc:
             print(f"Chat error: {exc}")
@@ -80,7 +80,7 @@ def test_session_reset():
             print("Failed to create session for reset test")
             return False
 
-        session_id = response.json()["session_id"]
+        session_id = response.headers.get("X-Session-Id")
         reset_response = requests.post(
             f"{API_BASE_URL}/api/chat/reset",
             json={"session_id": session_id},

@@ -30,8 +30,7 @@ export class ChatApi {
     if (STATIC_MODE) {
       return {
         reply: STATIC_REPLY,
-        session_id: request.session_id || 'static-chat-session',
-        timestamp: new Date().toISOString(),
+        sessionId: request.session_id || 'static-chat-session',
       };
     }
 
@@ -60,8 +59,11 @@ export class ChatApi {
         );
       }
 
-      const data: ChatApiResponse = await response.json();
-      return data;
+      const data = await response.json() as { reply: string };
+      return {
+        reply: data.reply,
+        sessionId: response.headers.get('X-Session-Id') || request.session_id || '',
+      };
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         throw new ChatApiError('Request was cancelled');

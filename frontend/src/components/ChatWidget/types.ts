@@ -18,8 +18,7 @@ export interface ChatState {
 
 export interface ChatApiResponse {
   reply: string;
-  session_id: string;
-  timestamp: string;
+  sessionId: string;
 }
 
 export interface ChatApiRequest {
